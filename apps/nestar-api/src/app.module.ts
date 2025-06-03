@@ -24,3 +24,11 @@ import { DatabaseModule } from './database/database.module';
 	providers: [AppService, AppResolver],
 })
 export class AppModule {}
+
+
+
+
+// By Module incredient 
+// Module decorator orqali xosil qilindi
+// @ - decorator
+// Query data olish
