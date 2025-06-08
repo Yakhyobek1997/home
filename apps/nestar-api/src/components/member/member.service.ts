@@ -35,7 +35,11 @@ export class MemberService {
 
 
     public async login(input: LoginInput): Promise<Member> {
+        // login methodi input argumentni ovotti turi LoginInput
+        // ya'ni frontenddan kelayotgan memberNick va memberPassword bor bo‘lishi kerak.
+        // Bu method Promise<Member> qaytaradi, ya’ni async function va backenddan Member obyektini qaytaradi.
   const { memberNick, memberPassword } = input;
+  // Bu yerda input obyekt ichidan ikkita property ajratib olinmoqda: memberNick va memberPassword.
   const response: Member | null = await this.memberModel
     .findOne({ memberNick: memberNick })
     .select('+memberPassword')
