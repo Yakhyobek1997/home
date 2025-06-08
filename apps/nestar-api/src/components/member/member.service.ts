@@ -13,23 +13,17 @@ export class MemberService {
   constructor(@InjectModel('Member') private readonly memberModel: Model<Member>) {}
 
   public async signup(input: MemberInput): Promise<Member> {
+  // TODO: Hash password
   try {
-    if (input.memberPassword) {
-      input.memberPassword = await bcrypt.hash(input.memberPassword, 10);
-    }
-
-    const result = await this.memberModel.findOneAndUpdate(
-      { memberPhone: input.memberPhone }, // filter
-      { $set: input },                    // update
-      { new: true, upsert: true }         // new: return updated, upsert: create if not found
-    ).exec();
-
+    const result = await this.memberModel.create(input);
+    // TODO: Authentication via TOKEN
     return result;
   } catch (err) {
     console.log('Error, Service.model:', err);
-    throw new BadRequestException(err);
+    throw new BadRequestException(Message.USED_MEMBER_NICK_OR_PHONE);
   }
 }
+
 
 
 
