@@ -5,7 +5,7 @@ import { LoggingInterceptor } from './libs/interceptor/Logging.interceptor';
 
 // Define qismi
 async function bootstrap() {
-	const app = await NestFactory.create(AppModule);
+	const app = await NestFactory.create(AppModule);// expres + nest
 	app.useGlobalPipes(new ValidationPipe());
 	// Nesfactoryni olib create methodni call qilib
 	// AppModule ni argument sifa past qilib natijatini kutib app ga tenglasht.
