@@ -5,20 +5,21 @@ import { Member } from '../../libs/dto/member/member';
 import { LoginInput, MemberInput } from '../../libs/dto/member/member.input';
 import { MemberStatus } from '../../libs/enums/member.enum';
 import { Message } from '../../libs/enums/common.enum';
-
+import { AuthService } from '../auth/auth.service';
 @Injectable()
 export class MemberService {
-
-	constructor(@InjectModel('Member') private readonly memberModel: Model<Member>) {}
+	constructor(
+		@InjectModel('Member') private readonly memberModel: Model<Member>,
+		private authService: AuthService,
+	) {}
 
 	public async signup(input: MemberInput): Promise<Member> {
+		input.memberPassword = await this.authService.hashPassword(input.memberPassword);
+		console.log(input.memberPassword);
 		try {
 			const result = await this.memberModel.create(input);
 			// TODO: auth tokens
-
-			// Null yoki undefined bo‘lsa, 0 qilib qaytaramiz:
-			if (result.memberFollowings == null) result.memberFollowings = 0;
-
+			result.accessToken = await this.authService.createToken(result);
 			return result;
 		} catch (error) {
 			console.log('signup service', error);
@@ -42,11 +43,11 @@ export class MemberService {
 		if (!isMatch) {
 			throw new InternalServerErrorException(Message.WRONG_PASSWORD);
 		}
-
+//token
+    response.accessToken = await this.authService.createToken(response);
+    return response;
 		// Null yoki undefined bo‘lsa, 0 qilib qaytaramiz:
-		if (response.memberFollowings == null) response.memberFollowings = 0;
-
-		return response;
+	
 	}
 
 	public async updateMember(): Promise<string> {
@@ -65,4 +66,3 @@ export class MemberService {
 		return 'getMember executed';
 	}
 }
-
