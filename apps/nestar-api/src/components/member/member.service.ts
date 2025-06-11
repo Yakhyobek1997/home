@@ -10,11 +10,15 @@ import { Message } from '../../libs/enums/common.enum';
 export class MemberService {
 
 	constructor(@InjectModel('Member') private readonly memberModel: Model<Member>) {}
+
 	public async signup(input: MemberInput): Promise<Member> {
-		// TODO: hash
 		try {
 			const result = await this.memberModel.create(input);
 			// TODO: auth tokens
+
+			// Null yoki undefined bo‘lsa, 0 qilib qaytaramiz:
+			if (result.memberFollowings == null) result.memberFollowings = 0;
+
 			return result;
 		} catch (error) {
 			console.log('signup service', error);
@@ -38,12 +42,17 @@ export class MemberService {
 		if (!isMatch) {
 			throw new InternalServerErrorException(Message.WRONG_PASSWORD);
 		}
+
+		// Null yoki undefined bo‘lsa, 0 qilib qaytaramiz:
+		if (response.memberFollowings == null) response.memberFollowings = 0;
+
 		return response;
 	}
 
 	public async updateMember(): Promise<string> {
 		return 'updateMember executed';
 	}
+
 	public async getMember(): Promise<string> {
 		return 'getMember executed';
 	}
@@ -51,7 +60,9 @@ export class MemberService {
 	public async getAllMembersByAdmin(): Promise<string> {
 		return 'updateMember executed';
 	}
+
 	public async updateMemberByAdmin(): Promise<string> {
 		return 'getMember executed';
 	}
 }
+

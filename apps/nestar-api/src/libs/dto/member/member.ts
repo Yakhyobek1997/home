@@ -45,7 +45,7 @@ export class Member {
 	@Field(() => Int)
 	memberFollowers: number;
 
-	@Field(() => Int)
+	@Field(() => Int, { defaultValue: 0 }) // <-- defaultValue bilan
 	memberFollowings: number;
 
 	@Field(() => Int)
@@ -77,4 +77,6 @@ export class Member {
 
     @Field(() => Date)
 	updatedAt: Date;
+	
 }
+
