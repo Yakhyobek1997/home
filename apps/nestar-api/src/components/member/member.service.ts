@@ -1,16 +1,22 @@
+import { ViewInput } from './../../libs/dto/view/view.input';
+import { ViewService } from './../view/view.service';
 import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, ObjectId, Schema } from 'mongoose';
 import { Member } from '../../libs/dto/member/member';
 import { LoginInput, MemberInput } from '../../libs/dto/member/member.input';
 import { MemberStatus } from '../../libs/enums/member.enum';
 import { Message } from '../../libs/enums/common.enum';
 import { AuthService } from '../auth/auth.service';
+import { MemberUpdate } from '../../libs/dto/member/member.update';
+import { T } from '../../libs/types/common';
+import { ViewGroup } from '../../libs/enums/view.enum';
 @Injectable()
 export class MemberService {
 	constructor(
 		@InjectModel('Member') private readonly memberModel: Model<Member>,
 		private authService: AuthService,
+		private viewService: ViewService,
 	) {}
 
 	public async signup(input: MemberInput): Promise<Member> {
@@ -28,34 +34,68 @@ export class MemberService {
 	}
 
 	public async login(input: LoginInput): Promise<Member> {
-		const { memberNick, memberPassword } = input;
-		const response: Member | null = await this.memberModel
-			.findOne({ memberNick: memberNick })
-			.select('+memberPassword')
+	const { memberNick, memberPassword } = input;
+	const response = await this.memberModel
+		.findOne({ memberNick })
+		.select('+memberPassword')
+		.exec();
+
+	if (!response || response.memberStatus === MemberStatus.DELETE) {
+		throw new InternalServerErrorException(Message.NO_MEMBER_NICK);
+	}
+	if (response.memberStatus === MemberStatus.BLOCK) {
+		throw new InternalServerErrorException(Message.BLOCKED_USER);
+	}
+
+	const isMatch = await this.authService.comparePasswords(memberPassword, response.memberPassword);
+	if (!isMatch) {
+		throw new InternalServerErrorException(Message.WRONG_PASSWORD);
+	}
+
+	response.accessToken = await this.authService.createToken(response);
+	return response;
+}
+
+
+	public async updateMember(memberId: ObjectId, input: MemberUpdate): Promise<Member> {
+		const result = await this.memberModel
+			.findOneAndUpdate(
+				{
+					_id: memberId,
+					memberStatus: MemberStatus.ACTIVE,
+				},
+				input,
+				{ new: true },
+			)
 			.exec();
-		if (!response || response.memberStatus === MemberStatus.DELETE) {
-			throw new InternalServerErrorException(Message.NO_MEMBER_NICK);
-		} else if (response.memberStatus === MemberStatus.BLOCK) {
-			throw new InternalServerErrorException(Message.BLOCKED_USER);
+
+		if (!result) {
+			throw new InternalServerErrorException(Message.UPDATE_FAILED);
 		}
-		//TODO:
-		const isMatch = input.memberPassword === response.memberPassword;
-		if (!isMatch) {
-			throw new InternalServerErrorException(Message.WRONG_PASSWORD);
-		}
-//token
-    response.accessToken = await this.authService.createToken(response);
-    return response;
-		// Null yoki undefined bo‘lsa, 0 qilib qaytaramiz:
-	
+		result.accessToken = await this.authService.createToken(result);
+		return result;
 	}
 
-	public async updateMember(): Promise<string> {
-		return 'updateMember executed';
-	}
+	public async getMember(memberId: ObjectId, targetId: ObjectId): Promise<Member> {
+		const search: T = {
+			_id: targetId,
+			memberStatus: {
+				$in: [MemberStatus.ACTIVE, MemberStatus.BLOCK],
+			},
+		};
+		const targetMember = await this.memberModel.findOne(search).lean().exec();
+		if (!targetMember) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
 
-	public async getMember(): Promise<string> {
-		return 'getMember executed';
+		if (memberId) {
+			const viewInput = { memberId: memberId, viewRefId: targetId, viewGroup: ViewGroup.MEMBER };
+			const newView = await this.viewService.recordView(viewInput);
+			if (newView) {
+				await this.memberModel.findOneAndUpdate(search, { $inc: { memberViews: 1 } }, { new: true }).exec();
+				targetMember.memberViews++;
+			}
+		}
+
+		return targetMember;
 	}
 
 	public async getAllMembersByAdmin(): Promise<string> {

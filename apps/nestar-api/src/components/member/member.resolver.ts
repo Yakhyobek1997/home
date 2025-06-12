@@ -9,6 +9,8 @@ import { ObjectId } from 'mongoose';
 import { MemberType } from '../../libs/enums/member.enum';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import { MemberUpdate } from '../../libs/dto/member/member.update';
+import { shapeIntoMongoObjectId } from '../../libs/config';
 // import { InternalServerErrorException } from '@nestjs/common';
 
 @Resolver()
@@ -27,14 +29,18 @@ export class MemberResolver {
 	@Mutation(() => Member)
 	public async login(@Args('input') input: LoginInput): Promise<Member> {
 		console.log('Mutation:  login');
-		return this.memberService.login(input);
+		return await this.memberService.login(input);
 	}
 
 	@UseGuards(AuthGuard)
-	@Mutation(() => String)
-	public async updateMember(@AuthMember('_id') memberId: ObjectId): Promise<string> {
+	@Mutation(() => Member)
+	public async updateMember(
+		@Args('input') input: MemberUpdate,
+		@AuthMember('_id') memberId: ObjectId,
+	): Promise<Member> {
 		console.log('Mutation: updateMember');
-		return this.memberService.updateMember();
+		delete input._id;
+		return this.memberService.updateMember(memberId, input);
 	}
 
 	@UseGuards(AuthGuard)
@@ -45,7 +51,7 @@ export class MemberResolver {
 		return `Hi ${memberNick}`;
 	}
 
-	@Roles(MemberType.USER)
+	@Roles(MemberType.USER, MemberType.AGENT)
 	@UseGuards(RolesGuard)
 	@Query(() => String)
 	public async checkAuthRoles(@AuthMember() authMember: Member): Promise<string> {
@@ -53,10 +59,12 @@ export class MemberResolver {
 		return `Hi ${authMember.memberNick}, you are ${authMember.memberType} (memberId: ${authMember._id})`;
 	}
 
-	@Query(() => String)
-	public async getMember(): Promise<string> {
+	@UseGuards(AuthGuard)
+	@Query(() => Member)
+	public async getMember(@Args('memberId') input: string, @AuthMember('_id') memberId: ObjectId): Promise<Member> {
 		console.log('Query: getMember');
-		return this.memberService.getMember();
+		const targetId = shapeIntoMongoObjectId(input);
+		return this.memberService.getMember(memberId, targetId);
 	}
 
 	/* ADMIN */
@@ -66,7 +74,6 @@ export class MemberResolver {
 	@UseGuards(RolesGuard)
 	@Mutation(() => String)
 	public async getAllMembersByAdmin(@AuthMember() authMember: Member): Promise<string> {
-		console.log('authMember.memberType:', authMember.memberType);
 		return this.memberService.getAllMembersByAdmin();
 	}
 
