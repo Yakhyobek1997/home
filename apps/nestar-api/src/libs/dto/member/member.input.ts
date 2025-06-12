@@ -1,41 +1,78 @@
-import { Field, InputType } from '@nestjs/graphql';
-import { IsNotEmpty, IsOptional, Length } from 'class-validator';
+import { Field, InputType, Int } from '@nestjs/graphql';
+import { IsIn, IsNotEmpty, IsOptional, Length, Min } from 'class-validator';
 import { MemberAuthType, MemberType } from '../../enums/member.enum';
+import { availableAgentSorts } from '../../config';
+import { Direction } from '../../enums/common.enum';
 
 @InputType()
 export class MemberInput {
-  @IsNotEmpty()
-  @Length(3, 16)
-  @Field(() => String)
-  memberNick: string;
+	@IsNotEmpty()
+	@Length(3, 16)
+	@Field(() => String)
+	memberNick: string;
 
-  @IsNotEmpty()
-  @Length(6, 18)
-  @Field(() => String)
-  memberPassword: string;
+	@IsNotEmpty()
+	@Length(6, 18)
+	@Field(() => String)
+	memberPassword: string;
 
-  @IsNotEmpty()
-  @Field(() => String)
-  memberPhone: string;
+	@IsNotEmpty()
+	@Field(() => String)
+	memberPhone: string;
 
-  @IsOptional()
-  @Field(() => MemberType, { nullable: true })
-  memberType: MemberType;
+	@IsOptional()
+	@Field(() => MemberType, { nullable: true })
+	memberType: MemberType;
 
-  @IsOptional()
-  @Field(() => MemberAuthType, { nullable: true })
-  memberAuthType: MemberType;
+	@IsOptional()
+	@Field(() => MemberAuthType, { nullable: true })
+	memberAuthType: MemberType;
 }
 
 @InputType()
 export class LoginInput {
+	@IsNotEmpty()
+	@Length(3, 16)
+	@Field(() => String)
+	memberNick: string;
+
+	@IsNotEmpty()
+	@Length(6, 18)
+	@Field(() => String)
+	memberPassword: string;
+}
+
+@InputType()
+class AISearch {
   @IsNotEmpty()
-  @Length(3, 16)
-  @Field(() => String)
-  memberNick: string;
+  @Field(() => String, { nullable: true })
+  text?: string;
+}
+
+
+@InputType()
+export class AgentsInquiry {
+	@IsNotEmpty()
+	@Min(1)
+	@Field(() => Int)
+	page: number;
+
+	@IsNotEmpty()
+	@Min(1)
+	@Field(() => Int)
+	limit: number;
+
+	@IsOptional()
+	@IsIn(availableAgentSorts)
+	@Field(() => String, { nullable: true })
+	sort?: string;
+
+	@IsOptional()
+	@Field(() => Direction, { nullable: true })
+	direction?: Direction;
+
 
   @IsNotEmpty()
-  @Length(6, 18)
-  @Field(() => String)
-  memberPassword: string;
+  @Field(() => AISearch)
+  search: AISearch
 }
