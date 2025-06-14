@@ -129,7 +129,7 @@ export class MemberService {
 		return result[0];
 	}
 
-	 public async getAllMembersByAdmin(input: MembersInquiry): Promise<Members> {
+	 public async getAllMembers(input: MembersInquiry): Promise<Members> {
     const { memberStatus, memberType, text } = input.search;
     const match: T = {};
 
