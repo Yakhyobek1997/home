@@ -19,6 +19,7 @@ export class MemberService {
 		private viewService: ViewService,
 	) {}
 
+
 	public async signup(input: MemberInput): Promise<Member> {
 		input.memberPassword = await this.authService.hashPassword(input.memberPassword);
 		console.log(input.memberPassword);
