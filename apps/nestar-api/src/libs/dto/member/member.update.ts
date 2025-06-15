@@ -9,10 +9,10 @@ export class MemberUpdate {
 	@Field(() => String)
 	_id?: ObjectId;
 
-	@IsNotEmpty()
+	@IsOptional()
 	@Length(3, 18)
-	@Field(() => String)
-	memberNick: string;
+	@Field(() => String, { nullable: true })
+	memberNick?: string;
 
 	@IsOptional()
 	@Field(() => MemberType, { nullable: true })
@@ -48,5 +48,5 @@ export class MemberUpdate {
 	@Field(() => String, { nullable: true })
 	memberDesc?: string;
 
-	deleteAt?: Date;
+	deleteAt: Date;
 }

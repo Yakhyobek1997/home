@@ -13,7 +13,7 @@ export class MemberInput {
   @IsNotEmpty()
   @Length(3, 16)
   @Field(() => String)
-  memberNick: string;
+  memberNick?: string;
 
   @IsNotEmpty()
   @Length(6, 18)
@@ -38,7 +38,7 @@ export class LoginInput {
   @IsNotEmpty()
   @Length(3, 16)
   @Field(() => String)
-  memberNick: string;
+  memberNick?: string;
 
   @IsNotEmpty()
   @Length(6, 18)
