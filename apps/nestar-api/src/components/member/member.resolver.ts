@@ -12,9 +12,9 @@ import { MemberUpdate } from '../../libs/dto/member/member.update';
 import { ObjectId } from 'mongoose';
 import { getSerialForImage, shapeIntoMongoObjectId, validMimeTypes } from '../../libs/config';
 import { WithoutGuard } from '../auth/guards/without.guard';
-import { GraphQLUpload, FileUpload } from 'graphql-upload';
 import { createWriteStream } from 'fs';
 import { Message } from '../../libs/enums/common.enum';
+import { GraphQLUpload, FileUpload} from 'graphql-upload'
 
 @Resolver()
 export class MemberResolver {
@@ -105,7 +105,7 @@ export class MemberResolver {
 @UseGuards(AuthGuard)
 @Mutation((returns) => String)
 public async imageUploader(
-	@Args({ name: 'file', type: () => GraphQLUpload })
+	@Args({ name: 'file', type: () =>  GraphQLUpload })
 { createReadStream, filename, mimetype }: FileUpload,
 @Args('target') target: String,
 ): Promise<string> {
@@ -133,7 +133,7 @@ return url;
 @UseGuards(AuthGuard)
 @Mutation((returns) => [String])
 public async imagesUploader(
-	@Args('files', { type: () => [GraphQLUpload] })
+	@Args('files', { type: () => [ GraphQLUpload] })
 files: Promise<FileUpload>[],
 @Args('target') target: String,
 ): Promise<string[]> {
