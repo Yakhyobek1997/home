@@ -9,7 +9,7 @@ import { UseGuards } from '@nestjs/common';
 import { AuthMember } from '../auth/decorators/authMember.decorator';
 import { ObjectId } from 'mongoose';
 import { WithoutGuard } from '../auth/guards/without.guard';
-import { shapeId } from '../../libs/config';
+import { shapeId, shapeIntoMongoObjectId } from '../../libs/config';
 import { PropertyUpdate } from '../../libs/dto/property/property.update';
 
 @Resolver()
@@ -86,4 +86,15 @@ export class PropertyResolver {
 		console.log('Query: getAllPropertiesByAdmin');
 		return await this.propertyService.getAllPropertiesByAdmin(input);
 	}
+
+
+  @Roles(MemberType.ADMIN)
+@UseGuards(RolesGuard)
+@Mutation(() => Property)
+public async updatePropertyByAdmin(@Args('input') input: PropertyUpdate): Promise<Property> {
+  console.log('Mutation: updatePropertyByAdmin');
+  input._id = shapeIntoMongoObjectId(input._id);
+  return await this.propertyService.updatePropertyByAdmin(input);
+}
+
 }
