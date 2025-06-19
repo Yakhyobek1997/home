@@ -21,7 +21,7 @@ import { PropertyUpdate } from '../../libs/dto/property/property.update';
 export class PropertyResolver {
 	constructor(private readonly propertyService: PropertyService) {}
 
-	//createProperty
+	// Create pro
 	@Roles(MemberType.AGENT)
 	@UseGuards(RolesGuard)
 	@Mutation(() => Property)
@@ -34,9 +34,9 @@ export class PropertyResolver {
 		return await this.propertyService.createProperty(input);
 	}
 
-	//getProperty
+	// Get pro
 	@UseGuards(WithoutGuard)
-	@Mutation(() => Property)
+	@Query(() => Property)
 	public async getProperty(
 		@Args('propertyId') input: string,
 		@AuthMember('_id') memberId: ObjectId,
@@ -45,7 +45,7 @@ export class PropertyResolver {
 		const propertyId = shapeId(input);
 		return await this.propertyService.getProperty(memberId, propertyId);
 	}
-	//update Property
+	// Update Pro
 	@Roles(MemberType.AGENT)
 	@UseGuards(RolesGuard)
 	@Mutation(() => Property)
