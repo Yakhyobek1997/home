@@ -1,0 +1,65 @@
+import { CommentsService } from './comment.service'
+import {
+  CommentInput,
+  CommentsInquiry,
+} from '../../libs/dto/comment/comment.input';
+import { ObjectId } from 'mongoose';
+import { UseGuards } from '@nestjs/common';
+import { AuthGuard } from '../auth/guards/auth.guard';
+import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { AuthMember } from '../auth/decorators/authMember.decorator';
+import { Comment, Comments } from '../../libs/dto/comment/comment';
+import { shapeIntoMongoObjectId } from '../../libs/config';
+import { CommentUpdate } from '../../libs/dto/comment/comment.update';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { MemberStatus, MemberType } from '../../libs/enums/member.enum';
+import { RolesGuard } from '../auth/guards/roles.guard';
+
+@Resolver()
+export class CommentsResolver {
+  constructor(private readonly commentService: CommentsService) {}
+
+  @UseGuards(AuthGuard)
+  @Mutation((returns) => Comment)
+  public async createComment(
+    @Args('input') input: CommentInput,
+    @AuthMember('_id') memberId: ObjectId,
+  ): Promise<Comment> {
+    console.log('mutation: createComment');
+    input.commentRefId = shapeIntoMongoObjectId(input.commentRefId);
+    return await this.commentService.createComment(memberId, input);
+  }
+
+  @UseGuards(AuthGuard)
+  @Mutation((returns) => Comment)
+  public async updateComment(
+    @Args('input') input: CommentUpdate,
+    @AuthMember('_id') memberId: ObjectId,
+  ): Promise<Comment> {
+    console.log('mutation: updateComment');
+    input._id = shapeIntoMongoObjectId(input._id);
+    return await this.commentService.updateComment(memberId, input);
+  }
+
+  @UseGuards(AuthGuard)
+  @Query((returns) => Comments)
+  public async getComments(
+    @Args('input') input: CommentsInquiry,
+    @AuthMember('_id') memberId: ObjectId,
+  ): Promise<Comments> {
+    console.log('Query: getComments');
+    input.search.commentRefId = shapeIntoMongoObjectId(input.search.commentRefId);
+    return await this.commentService.getComments(memberId, input);
+  }
+
+  @Roles(MemberType.ADMIN)
+  @UseGuards(RolesGuard)
+  @Mutation((returns) => Comment)
+  public async removeCommentByAdmin(
+    @Args('commentId') input: string,
+  ): Promise<Comment> {
+    console.log('mutation: removeCommentByAdmin');
+    const commentId = shapeIntoMongoObjectId(input);
+    return await this.commentService.removeCommentByAdmin(commentId);
+  }
+}
