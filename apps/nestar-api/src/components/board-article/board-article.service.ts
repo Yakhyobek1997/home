@@ -227,7 +227,7 @@ export class BoardArticleService {
   }
 
 
-  public async removeBoardArticle(articleId: ObjectId): Promise<BoardArticle> {
+  public async removeBoardArticleByAdmin(articleId: ObjectId): Promise<BoardArticle> {
     const search: T = {
       _id: articleId,
       articleStatus: BoardArticleStatus.DELETE,

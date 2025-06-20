@@ -50,7 +50,7 @@ export class BoardArticleResolver {
 		return await this.boardArticleService.getBoardArticles(memberId, input);
 	}
 
-	// Admin
+	// ** Admin **
 
 	@Roles(MemberType.ADMIN)
 	@UseGuards(RolesGuard)
@@ -71,16 +71,16 @@ export class BoardArticleResolver {
 		@AuthMember('_id') memberId: ObjectId,
 	) {
 		console.log('mutation: updateBoardArticleByAdmin');
-		input._id = shapeIntoMongoObjectId(input._id); //argument.  function
+		input._id = shapeIntoMongoObjectId(input._id); 
 		return await this.boardArticleService.updateBoardArticleByAdmin(input);
 	}
 
 	@Roles(MemberType.ADMIN)
 	@UseGuards(RolesGuard)
 	@Mutation((returns) => BoardArticle)
-	public async removeBoardArticle(@Args('articleId') input: string, @AuthMember('_id') memberId: ObjectId) {
+	public async removeBoardArticleByAdmin(@Args('articleId') input: string, @AuthMember('_id') memberId: ObjectId) {
 		console.log('mutation: createBoardArticle');
 		const articleId = shapeIntoMongoObjectId(input);
-		return await this.boardArticleService.removeBoardArticle(articleId);
+		return await this.boardArticleService.removeBoardArticleByAdmin(articleId);
 	}
 }
