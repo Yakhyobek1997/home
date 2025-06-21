@@ -20,7 +20,7 @@ import { GraphQLUpload, FileUpload } from 'graphql-upload';
 export class MemberResolver {
 	constructor(private readonly memberService: MemberService) {}
 
-	//mutation = post
+
 	@Mutation(() => Member)
 	public async signup(@Args('input') input: MemberInput): Promise<Member> {
 		console.log('Mutation: signup');
@@ -33,7 +33,7 @@ export class MemberResolver {
 		return await this.memberService.login(input);
 	}
 
-	//authenticated
+	// Authenticated
 	@UseGuards(AuthGuard)
 	@Mutation(() => Member)
 	public async updateMember(
@@ -64,7 +64,7 @@ export class MemberResolver {
 		return `Hi ${authMember.memberNick}, you are ${authMember.memberType} memberId: ${authMember._id}`;
 	}
 
-	//Query = get
+	// Query get
 	@UseGuards(WithoutGuard)
 	@Query(() => Member)
 	public async getMember(@Args('memberId') input: string, @AuthMember('_id') memberId: ObjectId): Promise<Member> {
@@ -81,7 +81,7 @@ export class MemberResolver {
 		return await this.memberService.getAgents(memberId, input);
 	}
 
-	//admin
+	// Admin
 	@Roles(MemberType.ADMIN)
 	@Query(() => Members)
 	public async getAllMembersByAdmin(@Args('input') input: MembersInquiry): Promise<Members> {
@@ -98,7 +98,7 @@ export class MemberResolver {
 
 	/** UPLOADER **/
 
-	// IMAGE UPLOADER (member.resolver.ts)
+	// IMAGE UPLOADER
 
 	@UseGuards(AuthGuard)
 	@Mutation((returns) => String)
