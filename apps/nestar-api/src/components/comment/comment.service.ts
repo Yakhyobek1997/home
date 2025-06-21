@@ -61,9 +61,10 @@ export class CommentService {
 	}
 
 	public async updateComment(memberId: ObjectId, input: CommentUpdate): Promise<Comment> {
+		const { _id } = input;
 		const result = await this.commentModel.findOneAndUpdate(
 			{
-				_id: input._id,
+				_id: _id,
 				memberId: memberId,
 				commentStatus: CommentStatus.ACTIVE,
 			},
@@ -84,24 +85,22 @@ export class CommentService {
 			[input?.sort ?? 'createdAt']: input?.direction ?? Direction.DESC,
 		};
 
-		const result = await this.commentModel
-			.aggregate([
-				{ $match: match },
-				{ $sort: sort },
-				{
-					$facet: {
-						list: [
-							{ $skip: (input.page - 1) * input.limit },
-							{ $limit: input.limit },
+		const result: Comments[] = await this.commentModel.aggregate([
+			{ $match: match },
+			{ $sort: sort },
+			{
+				$facet: {
+					list: [
+						{ $skip: (input.page - 1) * input.limit },
+						{ $limit: input.limit },
 
-							lookupMember,
-							{ $unwind: '$memberData' },
-						],
-						metaCounter: [{ $count: 'total' }],
-					},
+						lookupMember,
+						{ $unwind: '$memberData' },
+					],
+					metaCounter: [{ $count: 'total' }],
 				},
-			])
-			.exec();
+			},
+		]);
 		if (!result.length) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
 
 		return result[0];

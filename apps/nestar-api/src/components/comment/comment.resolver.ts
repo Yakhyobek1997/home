@@ -14,6 +14,7 @@ import { CommentUpdate } from '../../libs/dto/comment/comment.update';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { MemberStatus, MemberType } from '../../libs/enums/member.enum';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import { WithoutGuard } from '../auth/guards/without.guard';
 
 @Resolver()
 export class CommentResolver {
@@ -41,7 +42,7 @@ export class CommentResolver {
     return await this.commentService.updateComment(memberId, input);
   }
 
-  @UseGuards(AuthGuard)
+  @UseGuards(WithoutGuard)
   @Query((returns) => Comments)
   public async getComments(
     @Args('input') input: CommentsInquiry,
