@@ -50,6 +50,17 @@ export class BoardArticleResolver {
 		return await this.boardArticleService.getBoardArticles(memberId, input);
 	}
 
+	@UseGuards(AuthGuard)
+	@Mutation(() => BoardArticle)
+	public async likeTargetBoardArticle(
+		@Args('articleId') input: string,
+		@AuthMember('_id') memberId: ObjectId,
+	): Promise<BoardArticle> {
+		console.log('Mutation: LikeTargetBoardArticle');
+		const likeRefId = shapeIntoMongoObjectId(input);
+		return await this.boardArticleService.likeTargetBoardArticle(memberId, likeRefId);
+	}
+
 	// ** Admin **
 
 	@Roles(MemberType.ADMIN)
@@ -71,7 +82,7 @@ export class BoardArticleResolver {
 		@AuthMember('_id') memberId: ObjectId,
 	) {
 		console.log('mutation: updateBoardArticleByAdmin');
-		input._id = shapeIntoMongoObjectId(input._id); 
+		input._id = shapeIntoMongoObjectId(input._id);
 		return await this.boardArticleService.updateBoardArticleByAdmin(input);
 	}
 
