@@ -7,12 +7,8 @@ import { AuthModule } from '../auth/auth.module';
 import { ViewModule } from '../view/view.module';
 
 @Module({
-  imports: [
-    MongooseModule.forFeature([{ name: 'Member', schema: MemberSchema }]),
-    AuthModule,
-    ViewModule,
-  ],
-  providers: [MemberResolver, MemberService],
-  exports: [MemberService], // ✅ SHU YERNI QO‘SHISH ZARUR
+	imports: [MongooseModule.forFeature([{ name: 'Member', schema: MemberSchema }]), AuthModule, ViewModule],
+	providers: [MemberResolver, MemberService],
+	exports: [MemberService],
 })
 export class MemberModule {}
