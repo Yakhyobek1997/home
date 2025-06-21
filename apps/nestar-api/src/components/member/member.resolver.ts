@@ -1,6 +1,6 @@
 import { Mutation, Resolver, Query, Args } from '@nestjs/graphql';
 import { MemberService } from './member.service';
-import { InternalServerErrorException, UseGuards } from '@nestjs/common';
+import {  UseGuards } from '@nestjs/common';
 import { AgentsInquiry, LoginInput, MemberInput, MembersInquiry } from '../../libs/dto/member/member.input';
 import { Member, Members } from '../../libs/dto/member/member';
 import { AuthGuard } from '../auth/guards/auth.guard';
@@ -19,7 +19,6 @@ import { GraphQLUpload, FileUpload } from 'graphql-upload';
 @Resolver()
 export class MemberResolver {
 	constructor(private readonly memberService: MemberService) {}
-
 
 	@Mutation(() => Member)
 	public async signup(@Args('input') input: MemberInput): Promise<Member> {
@@ -81,6 +80,17 @@ export class MemberResolver {
 		return await this.memberService.getAgents(memberId, input);
 	}
 
+	@UseGuards(AuthGuard)
+	@Mutation(() => Member)
+	public async likeTargetMember(
+		@Args('memberId') input: string,
+		@AuthMember('_id') memberId: ObjectId,
+	): Promise<Member> {
+		console.log('Mutation: likeTargetMember');
+		const likeRefId = shapeIntoMongoObjectId(input)
+		return await this.memberService.likeTargetMember(memberId, likeRefId);
+	}
+
 	// Admin
 	@Roles(MemberType.ADMIN)
 	@Query(() => Members)
@@ -98,7 +108,7 @@ export class MemberResolver {
 
 	/** UPLOADER **/
 
-	// IMAGE UPLOADER
+	// IMAGE uploader
 
 	@UseGuards(AuthGuard)
 	@Mutation((returns) => String)
