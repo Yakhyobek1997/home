@@ -4,7 +4,6 @@ import * as path from 'path';
 
 export const availableAgentSorts = ['createdAt', 'updatedAt', 'memberLikes', 'memberViews', 'memberRank'];
 export const availableMemberSorts = ['createdAt', 'updatedAt', 'memberLikes', 'memberViews'];
-export const availableCommentSorts = ['createdAt', 'updatedAt'];
 export const availableOptions = ['propertyBarter', 'propertyRent'];
 export const availablePropertySorts = [
 	'createdAt',
@@ -14,17 +13,9 @@ export const availablePropertySorts = [
 	'propertyLikes',
 	'propertyPrice',
 ];
-
 export const availableBoardArticleSorts = ['createdAt', 'updatedAt', 'articleLikes', 'articleViews'];
+export const availableCommentSorts = ['createdAt', 'updatedAt'];
 
-export const lookUpMember = {
-	$lookup: {
-		from: 'members',
-		localField: 'memberId',
-		foreignField: '_id',
-		as: 'memberData',
-	},
-};
 
 /** IMAGE CONFIGURATION **/
 

@@ -1,4 +1,4 @@
-import { CommentsService } from './comment.service'
+import { CommentService } from './comment.service'
 import {
   CommentInput,
   CommentsInquiry,
@@ -16,8 +16,8 @@ import { MemberStatus, MemberType } from '../../libs/enums/member.enum';
 import { RolesGuard } from '../auth/guards/roles.guard';
 
 @Resolver()
-export class CommentsResolver {
-  constructor(private readonly commentService: CommentsService) {}
+export class CommentResolver {
+  constructor(private readonly commentService: CommentService) {}
 
   @UseGuards(AuthGuard)
   @Mutation((returns) => Comment)
