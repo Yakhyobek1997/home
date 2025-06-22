@@ -30,11 +30,17 @@ export class BoardArticleService {
 	) {}
 	// CreateBoardArticle
 	public async createBoardArticle(memberId: ObjectId, input: BoardArticleInput): Promise<BoardArticle> {
+	// CreateBoardArticle method bor public async method memberId va inputni parametr siftida berib 
+	// Pomise da BoardArticleni qaytarmoqda.
 		input.memberId = memberId;
-		try {
+		// parametrda berilgan memberIdni input ichida berilgan meberId ga tenglashtirvommiz
+		try { // 2 block try va catch blogidan foydalanvommiz
 			const result = await this.boardArticleModel.create(input);
-
+        // boardArticle schema Modelni create static methodga inputni argument berib
+		// kutib resultga tengladiik
 			await this.memberService.memberStatsEditor({
+		// memberService object .memberStatsEditor static methodga
+		// bitta argument berib key value larini bervommiz
 				_id: memberId,
 				targetKey: 'memberArticles',
 				modifier: 1,
@@ -51,35 +57,51 @@ export class BoardArticleService {
 	}
 	// GetBoardArticle
 	public async getBoardArticle(memberId: ObjectId, articleId: ObjectId): Promise<BoardArticle> {
-		const search: T = {
+	// getBoardArticle public async method va ikta memberId va articleIdni parametrni
+	// berib Promise qilib BoardArticleni qaytravommiz
+		const search: T = { // T turli search constantani create qilib 
 			_id: articleId,
 			articleStatus: BoardArticleStatus.ACTIVE,
+			// BoardArticleStatus objectni
 		};
 		const result = await this.boardArticleModel.findOne(search).exec();
+	// boardArticleModel schema modelni findOne static methodni chaqrib
+	// searchni argumetn sifatida bervommiz excuetion qilib await qilib result ga tengladik
+
+	// agar yuqordergla bo'masa error handling bo'ladi 
 		if (!result) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
 
-		if (memberId) {
-	const viewInput = {
+		if (memberId) { // Agar memberId mavjud bo‘lsa
+	const viewInput = { // viewInput obyekt yaratilmoqda
 		memberId: memberId,
 		viewRefId: articleId,
 		viewGroup: ViewGroup.ARTICLE,
 	};
 	const newView = await this.viewService.recordView(viewInput);
-	if (newView) {
+	// viewService objectni recordView methodga viewInput argu berib
+	// await qilib newView xosil qivommiz
+	if (newView) { // Keyin newView bo'lsa 
 		await this.boardArticleStatsEditor({
+	// boardArticleStatsEditor ga pastegilarni object sifatida berdik 
 			_id: articleId,
 			targetKey: 'articleViews',
 			modifier: 1,
 		});
-		result.articleViews++;
+		result.articleViews++; // 1 tadan View qo'shvommiz
 	}
 
-	const likeInput = { memberId: memberId, likeRefId: articleId, likeGroup: LikeGroup.ARTICLE };
+	//  likeInput object  u yerda 3 ta property dan berdik
+	const likeInput = {
+		memberId: memberId, // laykni bosgan foydalanuvchining IDsi.
+		likeRefId: articleId,// Layk bosilgan obyektning IDsi
+		likeGroup: LikeGroup.ARTICLE };// Layk qaysi **kategoriya (tur)**ga tegishli
 	result.meLiked = await this.likeService.checkLikeExistence(likeInput);
+	// likeService objectni checkLikeExistence methodga likeInput argument qilib kutib resultni meLikedga tenglashtirdik 
 }
-
-		result.memberData = await this.memberService.getMember(null, result.memberId);
-		return result;
+ 
+		result.memberData = await this.memberService.getMember(null, result.memberId); // null - article view oshirihs uchun qildik
+		// memberService objectni getMember methodni call qilib memberId argument sifatida berib ktuib 
+		return result; // result ga tenglashtrdik
 	}
 	// UpdateBoardArticle
 	public async updateBoardArticle(memberId: ObjectId, input: BoardArticleUpdate): Promise<BoardArticle> {

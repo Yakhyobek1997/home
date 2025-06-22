@@ -106,8 +106,13 @@ export class MemberService {
 	}
 
 	private async checkSubscription(followerId: ObjectId, followingId: ObjectId): Promise<MeFollowed[]> {
+	// checkSubscription methodi kevotti ichida ikta arg berilib 
+	// followerId va followingId Promise qilib MeFollowed massiveni qaytarvotti
 		const result = await this.followModel.findOne({ followingId: followingId, followerId: followerId }).exec();
+		// followModel.findOne(...) orqali MongoDB’dan ikki foydalanuvchi orasidagi kuzatuv aloqasi mavjudmi, tekshirilyapti.
 		return result ? [{ followerId: followerId, followingId: followingId, myFollowing: true }] : [];
+	// result mavjud bo‘lsa), natija MeFollowed[] turi bo‘lgan 
+	// bitta elementli massiv ko‘rinishida qaytadi, myFollowing: true bilan. yoki bosh massive
 	}
 
 	public async getAgents(memberId: ObjectId, input: AgentsInquiry): Promise<Members> {

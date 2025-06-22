@@ -8,6 +8,8 @@ import { ViewModule } from './view/view.module';
 import { FollowModule } from './follow/follow.module';
 import { BoardArticleModule } from './board-article/board-article.module';
 
+/** API BACKEND GRAPHQL MANTIQLARI**/ 
+
 @Module({
   imports: [
     MemberModule,

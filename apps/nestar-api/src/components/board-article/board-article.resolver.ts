@@ -21,26 +21,42 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 export class BoardArticleResolver {
 	constructor(private readonly boardArticleService: BoardArticleService) {}
 
-	@UseGuards(AuthGuard)
+// Auth bolgan userla uchun
+	@UseGuards(AuthGuard) 
 	@Mutation((returns) => BoardArticle)
-	public async createBoardArticle(@Args('input') input: BoardArticleInput, @AuthMember('_id') memberId: ObjectId) {
+	// createBoardArticle Mutation grapql bor u ikta paramaetr olmoqda
+	// input va memberId
+	public async createBoardArticle(@Args('input') input: BoardArticleInput, @AuthMember('_id') memberId: ObjectId,)
+	: Promise<BoardArticle> { // promise da BoardArticleni qaytarmoqda
 		console.log('mutation: createBoardArticle');
+		// keyn boardArticleService objectni createBoardArticle methodiga
+		// memberId, input argument sifatida berib kutib return qivommiz.
 		return await this.boardArticleService.createBoardArticle(memberId, input);
 	}
+
+// RETRIVER - login bo'lmasaham ko'rsa bo'ladi
+
 	@UseGuards(WithoutGuard)
 	@Query((returns) => BoardArticle)
 	public async getBoardArticle(@Args('articleId') input: string, @AuthMember('_id') memberId: ObjectId) {
+	// getBoardArticle Grapql Api input a memberid ni parametr sifatida olib
 		console.log('query: getBoardArticle');
+	// inputni shape qilib articleId constantaga tenglashtrdik
 		const articleId = shapeIntoMongoObjectId(input);
 		return await this.boardArticleService.getBoardArticle(memberId, articleId);
+	// boardArticleService objectni getBoardArticle methodiga ikta argument berdik,
+	//  berib kutib return qivommiz
 	}
+
 
 	@UseGuards(AuthGuard)
 	@Mutation((returns) => BoardArticle)
 	public async updateBoardArticle(@Args('input') input: BoardArticleUpdate, @AuthMember('_id') memberId: ObjectId) {
 		console.log('mutation: updateBoardArticle');
 		input._id = shapeIntoMongoObjectId(input._id);
+	// input._id shape  qlib 
 		return await this.boardArticleService.updateBoardArticle(memberId, input);
+		// boardArticleService objectga .updateBoardArticle methodni berib ichida ikta argument bedik
 	}
 
 	@UseGuards(WithoutGuard)
@@ -62,6 +78,8 @@ export class BoardArticleResolver {
 	}
 
 	// ** Admin **
+
+// AUTHORITHA
 
 	@Roles(MemberType.ADMIN)
 	@UseGuards(RolesGuard)

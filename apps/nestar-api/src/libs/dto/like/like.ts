@@ -3,6 +3,8 @@ import { LikeGroup } from '../../enums/like.enum';
 import { ObjectId } from 'mongoose';
 
 @ObjectType()
+// Malum bir targetga like bosilganyoki
+// bosilmaganligini aniqlashda xizmat qiladi
 export class MeLiked {
 	@Field(() => String)
 	memberId: ObjectId;

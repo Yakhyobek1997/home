@@ -80,10 +80,11 @@ export class MemberResolver {
 		return await this.memberService.getAgents(memberId, input);
 	}
 
-	@UseGuards(AuthGuard)
+	@UseGuards(AuthGuard) // Auth bo'lganuserla uchun
 	@Mutation(() => Member)
 	public async likeTargetMember(
 		@Args('memberId') input: string,
+	// memberId ostida qaysi memberga 
 		@AuthMember('_id') memberId: ObjectId,
 	): Promise<Member> {
 		console.log('Mutation: likeTargetMember');

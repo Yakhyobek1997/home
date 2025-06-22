@@ -26,3 +26,8 @@ async function bootstrap() {
 
 // Call
 bootstrap();
+
+
+// Nestjs paradigmalari
+// Obejct orient
+// Aspect orient

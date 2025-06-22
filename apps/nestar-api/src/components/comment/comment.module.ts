@@ -13,10 +13,10 @@ import { AuthModule } from '../auth/auth.module';
 	imports: [
 		MongooseModule.forFeature([{ name: 'Comment', schema: CommentSchema }]),
 		AuthModule,
-    MemberModule,
-    PropertyModule,
-    BoardArticleModule, 
-    ViewModule
+		MemberModule,
+		PropertyModule,
+		BoardArticleModule,
+		ViewModule,
 	],
 	providers: [CommentResolver, CommentService],
 })
