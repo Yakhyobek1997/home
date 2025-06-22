@@ -59,21 +59,25 @@ export class BoardArticleService {
 		if (!result) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
 
 		if (memberId) {
-			const viewInput = {
-				memberId: memberId,
-				viewRefId: articleId,
-				viewGroup: ViewGroup.ARTICLE,
-			};
-			const newView = await this.viewService.recordView(viewInput);
-			if (newView) {
-				await this.boardArticleStatsEditor({
-					_id: articleId,
-					targetKey: 'articleViews',
-					modifier: 1,
-				});
-				result.articleViews++;
-			}
-		}
+	const viewInput = {
+		memberId: memberId,
+		viewRefId: articleId,
+		viewGroup: ViewGroup.ARTICLE,
+	};
+	const newView = await this.viewService.recordView(viewInput);
+	if (newView) {
+		await this.boardArticleStatsEditor({
+			_id: articleId,
+			targetKey: 'articleViews',
+			modifier: 1,
+		});
+		result.articleViews++;
+	}
+
+	const likeInput = { memberId: memberId, likeRefId: articleId, likeGroup: LikeGroup.ARTICLE };
+	result.meLiked = await this.likeService.checkLikeExistence(likeInput);
+}
+
 		result.memberData = await this.memberService.getMember(null, result.memberId);
 		return result;
 	}

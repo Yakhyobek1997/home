@@ -20,7 +20,7 @@ export class MemberService {
 		@InjectModel('Member') private readonly memberModel: Model<Member>,
 		private authService: AuthService,
 		private viewService: ViewService,
-		private LikeService: LikeService,
+		private likeService: LikeService,
 	) {}
 
 	public async signup(input: MemberInput): Promise<Member> {
@@ -83,7 +83,7 @@ export class MemberService {
 				$in: [MemberStatus.ACTIVE, MemberStatus.BLOCK],
 			},
 		};
-		const targetMember = await this.memberModel.findOne(search).lean().exec();
+		const targetMember = await this.memberModel.findOne(search).exec();
 		if (!targetMember) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
 
 		if (memberId) {
@@ -93,6 +93,9 @@ export class MemberService {
 				await this.memberModel.findOneAndUpdate(search, { $inc: { memberViews: 1 } }, { new: true }).exec();
 				targetMember.memberViews++;
 			}
+
+			const likeInput = { memberId: memberId, likeRefId: targetId, likeGroup: LikeGroup.MEMBER,};
+			targetMember.meLiked = await this.likeService.checkLikeExistence(likeInput);
 		}
 
 		return targetMember;
@@ -123,7 +126,7 @@ export class MemberService {
 						list: [{ $skip: (input.page - 1) * input.limit }, { $limit: input.limit }],
 						metaCounter: [{ $count: 'total' }],
 					},
-				}, // optional facet block
+				},
 			])
 			.exec();
 
@@ -133,36 +136,34 @@ export class MemberService {
 		return result[0];
 	}
 
-   
-public async likeTargetMember(memberId: ObjectId, likeRefId: ObjectId): Promise<Member> {
-  const target: Member | null = await this.memberModel.findOne({ 
-    _id: likeRefId, 
-    memberStatus: MemberStatus.ACTIVE 
-  }).exec();
+	public async likeTargetMember(memberId: ObjectId, likeRefId: ObjectId): Promise<Member> {
+		const target: Member | null = await this.memberModel
+			.findOne({
+				_id: likeRefId,
+				memberStatus: MemberStatus.ACTIVE,
+			})
+			.exec();
 
-  if (!target) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
+		if (!target) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
 
-  const input: LikeInput = {
-    memberId,
-    likeRefId,
-    likeGroup: LikeGroup.MEMBER,
-  };
+		const input: LikeInput = {
+			memberId,
+			likeRefId,
+			likeGroup: LikeGroup.MEMBER,
+		};
 
-  // LIKE TOGGLE via Like modules
-  const modifier: number = await this.LikeService.toggleLike(input)
-  const result = await this.memberStatsEditor({ 
-    _id: likeRefId, 
-    targetKey: 'memberLikes', 
-    modifier: modifier 
-  });
+		// LIKE TOGGLE via Like modules
+		const modifier: number = await this.likeService.toggleLike(input);
+		const result = await this.memberStatsEditor({
+			_id: likeRefId,
+			targetKey: 'memberLikes',
+			modifier: modifier,
+		});
 
-  if (!result) throw new InternalServerErrorException(Message.SOMETHING_WENT_WRONG);
+		if (!result) throw new InternalServerErrorException(Message.SOMETHING_WENT_WRONG);
 
-  return result;
-}
-
-
-
+		return result;
+	}
 
 	public async getAllMembers(input: MembersInquiry): Promise<Members> {
 		const { memberStatus, memberType, text } = input.search;
@@ -203,7 +204,9 @@ public async likeTargetMember(memberId: ObjectId, likeRefId: ObjectId): Promise<
 
 	public async memberStatsEditor(input: StatisticModifier): Promise<Member> {
 		const { _id, targetKey, modifier } = input;
-		const result = await this.memberModel.findByIdAndUpdate({ _id }, { $inc: { [targetKey]: modifier } }, { new: true }).exec();
+		const result = await this.memberModel
+			.findByIdAndUpdate({ _id }, { $inc: { [targetKey]: modifier } }, { new: true })
+			.exec();
 		if (!result) {
 			throw new InternalServerErrorException(Message.UPDATE_FAILED);
 		}
