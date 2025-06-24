@@ -5,16 +5,20 @@ import { Model, ObjectId } from 'mongoose';
 import { Follower, Followers, Following, Followings } from '../../libs/dto/follow/follow';
 import { Direction, Message } from '../../libs/enums/common.enum';
 import { FollowInquiry } from '../../libs/dto/follow/follow.input';
-import { lookupAuthMemberLiked, lookupFollowerData, lookupFollowingData } from '../../libs/config';
+import {
+	lookupAuthMemberFollowed,
+	lookupAuthMemberLiked,
+	lookupFollowerData,
+	lookupFollowingData,
+} from '../../libs/config';
 import { T } from '../../libs/types/common';
-
 
 // Foydalanuvchi boshqa bir foydalanuvchini follow qilish (obuna bo‘lish) jarayonini bajaradi.
 @Injectable()
 export class FollowService {
 	constructor(
 		@InjectModel('Follow') private readonly followModel: Model<Follower | Following>,
-		                                                          //Shu turdagi qiymat qaytarish degani  
+		//Shu turdagi qiymat qaytarish degani
 		private readonly memberService: MemberService,
 	) {}
 
@@ -106,7 +110,8 @@ export class FollowService {
 						list: [
 							{ $skip: (page - 1) * limit },
 							{ $limit: limit },
-							lookupAuthMemberLiked(memberId,"$followingId"),
+							lookupAuthMemberLiked(memberId, '$followingId'),
+							lookupAuthMemberFollowed({ followerId: memberId, followingId: '$followingId' }),
 							lookupFollowingData,
 							{ $unwind: '$followingData' },
 						],
@@ -123,38 +128,35 @@ export class FollowService {
 		return result[0];
 	}
 
+	public async getMemberFollowers(memberId: ObjectId, input: FollowInquiry): Promise<Followers> {
+		const { page, limit, search } = input;
+		if (!search?.followingId) throw new InternalServerErrorException(Message.BAD_REQUEST);
 
+		const match: T = { followingId: search?.followingId };
+		console.log('match:', match);
 
-    public async getMemberFollowers(memberId: ObjectId, input: FollowInquiry): Promise<Followers> {
-  const { page, limit, search } = input;
-  if (!search?.followingId) throw new InternalServerErrorException(Message.BAD_REQUEST);
+		const result = await this.followModel
+			.aggregate([
+				{ $match: match },
+				{ $sort: { createdAt: Direction.DESC } },
+				{
+					$facet: {
+						list: [
+							{ $skip: (page - 1) * limit },
+							{ $limit: limit },
+							lookupAuthMemberLiked(memberId, '$followerId'),
+							lookupAuthMemberFollowed({ followerId: memberId, followingId: '$followerId' }),
+							lookupFollowerData,
+							{ $unwind: '$followerData' },
+						],
+						metaCounter: [{ $count: 'total' }],
+					},
+				},
+			])
+			.exec();
 
-  const match: T = { followingId: search?.followingId };
-  console.log('match:', match);
+		if (!result.length) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
 
-  const result = await this.followModel
-    .aggregate([
-      { $match: match },
-      { $sort: { createdAt: Direction.DESC } },
-      {
-        $facet: {
-          list: [
-            { $skip: (page - 1) * limit },
-            { $limit: limit },
-            // meLiked
-            // meFollowed
-            lookupFollowerData,
-            { $unwind: '$followerData' },
-          ],
-          metaCounter: [{ $count: 'total' }],
-        },
-      },
-    ])
-    .exec();
-
-  if (!result.length) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
-
-  return result[0];
-}
-
+		return result[0];
+	}
 }
