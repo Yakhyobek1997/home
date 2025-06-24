@@ -12,7 +12,7 @@ export class LoggingInterceptor implements NestInterceptor {
     const requestType = context.getType<GqlContextType>();
 
     if (requestType === 'http') {
-      // HTTP uchun logika kerak bo'lsa shu yerda yozing
+      // HTTP uchun logika kerak bo'lsa shu yerda
       return next.handle();
     }
 

@@ -8,10 +8,13 @@ import { FollowInquiry } from '../../libs/dto/follow/follow.input';
 import { lookupFollowerData, lookupFollowingData } from '../../libs/config';
 import { T } from '../../libs/types/common';
 
+
+// Foydalanuvchi boshqa bir foydalanuvchini follow qilish (obuna bo‘lish) jarayonini bajaradi.
 @Injectable()
 export class FollowService {
 	constructor(
 		@InjectModel('Follow') private readonly followModel: Model<Follower | Following>,
+		                                                          //Shu turdagi qiymat qaytarish degani  
 		private readonly memberService: MemberService,
 	) {}
 
