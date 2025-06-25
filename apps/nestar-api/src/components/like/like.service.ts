@@ -1,10 +1,14 @@
 import { InjectModel } from '@nestjs/mongoose';
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { Model } from 'mongoose';
+import { Model, ObjectId } from 'mongoose';
 import { Like, MeLiked } from '../../libs/dto/like/like';
 import { LikeInput } from '../../libs/dto/like/like.input';
 import { T } from '../../libs/types/common';
 import { Message } from '../../libs/enums/common.enum';
+import { OrdinaryInquiry } from '../../libs/dto/property/property.input';
+import { Properties } from '../../libs/dto/property/property';
+import { LikeGroup } from '../../libs/enums/like.enum';
+import { lookupFavorite } from '../../libs/config';
 
 @Injectable()
 export class LikeService {
@@ -15,34 +19,36 @@ export class LikeService {
 	public async toggleLike(input: LikeInput): Promise<number> {
 		// public async  toggleLike methodi bitta input argumetni qabul qilib
 		const search: T = { memberId: input.memberId, likeRefId: input.likeRefId };
-		// Bu yerda biz search degan obyekt yaratdik.obyekt MongoDB'dan memberId va likeRefId 
+		// Bu yerda biz search degan obyekt yaratdik.obyekt MongoDB'dan memberId va likeRefId
 		// ni like mavjudligini tekshirish uchun ishlatiladi
 		const exist = await this.likeModel.findOne(search).exec();
 		let modifier = 1;
-		// Bu yerda likeModeldan memberId va likeRefId bo‘yicha 
+		// Bu yerda likeModeldan memberId va likeRefId bo‘yicha
 		// oldin like bosilganmi yo‘qmi – shuni tekshiryapmiz.
 		// gar exist degan natija true bo‘lsa, demak allaqachon like bosilgan
 		// modifier esa biz keyinchalik like qo‘shdikmi
 		// yoki olib tashladikmi — shuni belgilash uchun ishlatiladi.
 
 		// Bu yerda exist ya’ni like bor-yo‘qligini tekshirdik
-		if (exist) { // . Agar like avval bosilgan bo‘lsa, foydalanuvchi uni bekor qilmoqchi degani,
+		if (exist) {
+			// . Agar like avval bosilgan bo‘lsa, foydalanuvchi uni bekor qilmoqchi degani,
 			await this.likeModel.findOneAndDelete(search).exec();
 			modifier = -1;
 		} else {
-			try { // agar like hali yo‘q bo‘lsa — create() bilan uni bazaga yangi qilib qo‘shdik.
+			try {
+				// agar like hali yo‘q bo‘lsa — create() bilan uni bazaga yangi qilib qo‘shdik.
 				await this.likeModel.create(input);
 			} catch (err) {
-	// Har ehtimolga qarshi try-catch ichida ishlatyapmiz
-	// bu xatolik bo‘lsa to‘g‘ri tutib ishlov berish uchun
+				// Har ehtimolga qarshi try-catch ichida ishlatyapmiz
+				// bu xatolik bo‘lsa to‘g‘ri tutib ishlov berish uchun
 				console.log('Error, Service.model:', err.message);
 				throw new BadRequestException(Message.CREATE_FAILED);
 			}
 		}
 
 		console.log(`~ Like modifier ${modifier} ~`);
-// Bu joyda foydalanuvchi like bosganmi yoki bekor qilganmi
-// shuni modifier orqali ajratamiz va logga chiqarib,reurn qivommiz
+		// Bu joyda foydalanuvchi like bosganmi yoki bekor qilganmi
+		// shuni modifier orqali ajratamiz va logga chiqarib,reurn qivommiz
 		return modifier;
 	}
 
@@ -52,5 +58,44 @@ export class LikeService {
 		const result = await this.likeModel.findOne({ memberId: memberId, likeRefId: likeRefId }).exec();
 		return result ? [{ memberId: memberId, likeRefId: likeRefId, myFavorite: true }] : [];
 		// Agar like bosgan bo‘lsa, bu haqda myFavorite: true bo‘lgan ma’lumot qaytariladi. Aks holda bo‘sh array qaytariladi.
+	}
+	public async getFavoriteProperties(memberId: ObjectId, input: OrdinaryInquiry): Promise<Properties> {
+		const { page, limit } = input;
+		const match: T = {
+			likeGroup: LikeGroup.PROPERTY,
+			memberId: memberId,
+		};
+
+		const data: T = await this.likeModel
+			.aggregate([
+				{ $match: match },
+				{ $sort: { updatedAt: -1 } },
+				{
+					$lookup: {
+						from: 'properties',
+						localField: 'likeRefId',
+						foreignField: '_id',
+						as: 'favoriteProperty',
+					},
+				},
+				{ $unwind: '$favoriteProperty' },
+				{
+					$facet: {
+						list: [
+							{ $skip: (page - 1) * limit },
+							{ $limit: limit },
+							lookupFavorite,
+							{$unwind: '$favoriteProperty.memberData'}
+						],
+						metaCounter: [{$count: 'total'}]
+					},
+				},
+			])
+			.exec();
+
+		const result: Properties = { list: [], metaCounter: data[0].metaCounter}
+		console.log("result",result)
+		result.list = data[0].list.map((ele) => ele.favoriteProperty)
+		return result
 	}
 }

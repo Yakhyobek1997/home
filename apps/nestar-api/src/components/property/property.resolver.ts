@@ -4,6 +4,7 @@ import { Properties, Property } from '../../libs/dto/property/property';
 import {
 	AgentPropertiesInquiry,
 	AllPropertiesInquiry,
+	OrdinaryInquiry,
 	PropertiesInquiry,
 	PropertyInput,
 } from '../../libs/dto/property/property.input';
@@ -17,8 +18,6 @@ import { WithoutGuard } from '../auth/guards/without.guard';
 import { shapeIntoMongoObjectId } from '../../libs/config';
 import { PropertyUpdate } from '../../libs/dto/property/property.update';
 import { AuthGuard } from '../auth/guards/auth.guard';
-;
-
 @Resolver()
 export class PropertyResolver {
 	constructor(private readonly propertyService: PropertyService) {}
@@ -71,6 +70,16 @@ export class PropertyResolver {
 		return await this.propertyService.getProperties(memberId, input);
 	}
 
+	@UseGuards(WithoutGuard)
+	@Query((returns) => Properties)
+	public async getFavorites(
+		@Args('input') input: OrdinaryInquiry,
+		@AuthMember('_id') memberId: ObjectId,
+	): Promise<Properties> {
+		console.log('query:  getFavorites');
+		return await this.propertyService.getFavorites(memberId, input);
+	}
+
 	@Roles(MemberType.AGENT)
 	@UseGuards(RolesGuard)
 	@Query(() => Properties)
@@ -92,7 +101,6 @@ export class PropertyResolver {
 		const likeRefId = shapeIntoMongoObjectId(input);
 		return await this.propertyService.likeTargetProperty(memberId, likeRefId);
 	}
-
 
 	/** ADMIN **/
 	@Roles(MemberType.ADMIN)
