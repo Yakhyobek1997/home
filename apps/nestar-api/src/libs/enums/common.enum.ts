@@ -1,5 +1,6 @@
-import { registerEnumType } from "@nestjs/graphql";
+import { registerEnumType } from '@nestjs/graphql';
 
+/* eslint-disable prettier/prettier */
 export enum Message {
   SOMETHING_WENT_WRONG = 'Something went wrong!',
   NO_DATA_FOUND = 'No data found!',
@@ -9,8 +10,8 @@ export enum Message {
   UPLOAD_FAILED = 'Upload failed!',
   BAD_REQUEST = 'Bad Request',
 
-  USED_MEMBER_NICK_OR_PHONE = "Aldready used member nick or phone!",
   NO_MEMBER_NICK = 'No member with that member nick!',
+  USED_USERNAME_OR_PHONE = 'used username or phone',
   BLOCKED_USER = 'You have been blocked!',
   WRONG_PASSWORD = 'Wrong password, try again!',
   NOT_AUTHENTICATED = 'You are not authenticated, please login first!',
@@ -19,9 +20,7 @@ export enum Message {
   NOT_ALLOWED_REQUEST = 'Not Allowed Request!',
   PROVIDE_ALLOWED_FORMAT = 'Please provide jpg, jpeg or png images!',
   SELF_SUBSCRIPTION_DENIED = 'Self subscription is denied!',
-  USED_USERNAME_OR_PHONE = "USED_USERNAME_OR_PHONE",
 }
-
 
 export enum Direction {
   ASC = 1,

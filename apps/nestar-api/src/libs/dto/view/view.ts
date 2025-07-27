@@ -22,4 +22,3 @@ export class View {
   @Field(() => Date)
   updatedAt: Date;
 }
-

@@ -3,38 +3,34 @@ import { LikeGroup } from '../../enums/like.enum';
 import { ObjectId } from 'mongoose';
 
 @ObjectType()
-// Malum bir targetga like bosilganyoki
-// bosilmaganligini aniqlashda xizmat qiladi
 export class MeLiked {
-	@Field(() => String)
-	memberId: ObjectId;
+  @Field(() => String)
+  memberId: ObjectId | null;
 
-	@Field(() => String)
-	likeRefId: ObjectId;
+  @Field(() => String)
+  likeRefId: ObjectId;
 
-	@Field(() => Boolean)
-	myFavorite: boolean;
+  @Field(() => Boolean)
+  myFavorite: boolean;
 }
 
 @ObjectType()
 export class Like {
-	@Field(() => String)
-	_id: ObjectId;
+  @Field(() => String)
+  _id: ObjectId;
 
-	@Field(() => LikeGroup)
-	likeGroup: LikeGroup;
+  @Field(() => LikeGroup)
+  likeGroup: LikeGroup;
 
-	@Field(() => String)
-	likeRefId: ObjectId;
+  @Field(() => String)
+  likeRefId: ObjectId;
 
-	@Field(() => String)
-	memberId: ObjectId;
+  @Field(() => String)
+  memberId: ObjectId;
 
-	@Field(() => Date)
-	createdAt: Date;
+  @Field(() => Date)
+  createdAt: Date;
 
-	@Field(() => Date)
-	updatedAt: Date;
+  @Field(() => Date)
+  updatedAt: Date;
 }
-
-

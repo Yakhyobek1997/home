@@ -1,24 +1,18 @@
 import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
-import { FollowResolver } from './follow.resolver';
 import { FollowService } from './follow.service';
 import FollowSchema from '../../schemas/Follow.model';
+import { MongooseModule } from '@nestjs/mongoose';
+import { FollowResolver } from './follow.resolver';
 import { AuthModule } from '../auth/auth.module';
 import { MemberModule } from '../member/member.module';
 
-@Module({ // 
-  // imports qismida birinchidan
+@Module({
   imports: [
-    MongooseModule.forFeature([ // MongooseModule.forFeature
-      {
-        name: 'Follow',// orqali 'Follow' modelini ro‘yxatdan o‘tkazyapmiz 
-        schema: FollowSchema,
-      },
-    ]),
+    MongooseModule.forFeature([{ name: 'Follow', schema: FollowSchema }]),
     AuthModule,
     MemberModule,
   ],
-  providers: [FollowResolver, FollowService],
-  exports: [FollowService]
+  providers: [FollowService, FollowResolver],
+  exports: [FollowService],
 })
 export class FollowModule {}

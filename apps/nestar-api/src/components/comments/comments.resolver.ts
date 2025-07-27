@@ -1,4 +1,4 @@
-import { CommentService } from './comment.service'
+import { CommentsService } from './comments.service';
 import {
   CommentInput,
   CommentsInquiry,
@@ -9,16 +9,15 @@ import { AuthGuard } from '../auth/guards/auth.guard';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { AuthMember } from '../auth/decorators/authMember.decorator';
 import { Comment, Comments } from '../../libs/dto/comment/comment';
-import { shapeIntoMongoObjectId } from '../../libs/config';
+import { shapeId } from '../../libs/config';
 import { CommentUpdate } from '../../libs/dto/comment/comment.update';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { MemberStatus, MemberType } from '../../libs/enums/member.enum';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { WithoutGuard } from '../auth/guards/without.guard';
 
 @Resolver()
-export class CommentResolver {
-  constructor(private readonly commentService: CommentService) {}
+export class CommentsResolver {
+  constructor(private readonly commentService: CommentsService) {}
 
   @UseGuards(AuthGuard)
   @Mutation((returns) => Comment)
@@ -27,7 +26,7 @@ export class CommentResolver {
     @AuthMember('_id') memberId: ObjectId,
   ): Promise<Comment> {
     console.log('mutation: createComment');
-    input.commentRefId = shapeIntoMongoObjectId(input.commentRefId);
+    input.commentRefId = shapeId(input.commentRefId);
     return await this.commentService.createComment(memberId, input);
   }
 
@@ -38,21 +37,22 @@ export class CommentResolver {
     @AuthMember('_id') memberId: ObjectId,
   ): Promise<Comment> {
     console.log('mutation: updateComment');
-    input._id = shapeIntoMongoObjectId(input._id);
+    input._id = shapeId(input._id);
     return await this.commentService.updateComment(memberId, input);
   }
 
-  @UseGuards(WithoutGuard)
+  @UseGuards(AuthGuard)
   @Query((returns) => Comments)
   public async getComments(
     @Args('input') input: CommentsInquiry,
     @AuthMember('_id') memberId: ObjectId,
   ): Promise<Comments> {
     console.log('Query: getComments');
-    input.search.commentRefId = shapeIntoMongoObjectId(input.search.commentRefId);
+    input.search.commentRefId = shapeId(input.search.commentRefId);
     return await this.commentService.getComments(memberId, input);
   }
 
+  //admin
   @Roles(MemberType.ADMIN)
   @UseGuards(RolesGuard)
   @Mutation((returns) => Comment)
@@ -60,7 +60,7 @@ export class CommentResolver {
     @Args('commentId') input: string,
   ): Promise<Comment> {
     console.log('mutation: removeCommentByAdmin');
-    const commentId = shapeIntoMongoObjectId(input);
+    const commentId = shapeId(input);
     return await this.commentService.removeCommentByAdmin(commentId);
   }
 }

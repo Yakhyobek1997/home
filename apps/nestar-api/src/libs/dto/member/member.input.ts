@@ -5,15 +5,16 @@ import {
   MemberStatus,
   MemberType,
 } from '../../enums/member.enum';
-import { availableAgentSorts, availableMemberSorts } from '../../config';
+import { availableAgents, availableMembers } from '../../config';
 import { Direction } from '../../enums/common.enum';
+import { MemberService } from 'apps/nestar-api/src/components/member/member.service';
 
 @InputType()
 export class MemberInput {
   @IsNotEmpty()
   @Length(3, 16)
   @Field(() => String)
-  memberNick?: string;
+  memberNick: string;
 
   @IsNotEmpty()
   @Length(6, 18)
@@ -38,7 +39,7 @@ export class LoginInput {
   @IsNotEmpty()
   @Length(3, 16)
   @Field(() => String)
-  memberNick?: string;
+  memberNick: string;
 
   @IsNotEmpty()
   @Length(6, 18)
@@ -66,7 +67,7 @@ export class AgentsInquiry {
   limit: number;
 
   @IsOptional()
-  @IsIn(availableAgentSorts)
+  @IsIn(availableAgents)
   @Field(() => String, { nullable: true })
   sort?: string;
 
@@ -107,7 +108,7 @@ export class MembersInquiry {
   limit: number;
 
   @IsOptional()
-  @IsIn([availableMemberSorts])
+  @IsIn(availableMembers)
   @Field(() => String, { nullable: true })
   sort?: string;
 

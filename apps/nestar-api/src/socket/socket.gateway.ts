@@ -1,32 +1,34 @@
 import { Logger } from '@nestjs/common';
-import { OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
-import { Server } from 'ws';
-import * as WebSocket from 'ws';
+import {
+  OnGatewayInit,
+  SubscribeMessage,
+  WebSocketGateway,
+  WebSocketServer,
+} from '@nestjs/websockets';
+import { Server, WebSocket } from 'ws';
+import * as url from 'url';
 import { AuthService } from '../components/auth/auth.service';
 import { Member } from '../libs/dto/member/member';
-import * as url from 'url';
 
 interface MessagePayload {
   event: string;
   text: string;
-  memberData: Member | null;
+  memberData: Member | null | undefined;
 }
 
 interface InfoPayload {
   event: string;
   totalClients: number;
-  memeberData: Member | null;
+  memberData: Member | null | undefined;
   action: string;
 }
 
 @WebSocketGateway({ transports: ['websocket'], secure: false })
 export class SocketGateway implements OnGatewayInit {
-  private logger: Logger = new Logger('SocketEventsGateway');
-  private summaryClient: number = 0;
-
-  // --- Map tipini Member | null qilib kengaytirdik
-  private clientsAuthMap = new Map<WebSocket, Member | null>();
-  private messageList: MessagePayload[] = [];
+  private logger: Logger = new Logger('SocketEventsLogger');
+  private total: number = 0;
+  private clientAuthMap = new Map<WebSocket, Member | null>();
+  private messagesList: MessagePayload[] = [];
 
   constructor(private authService: AuthService) {}
 
@@ -34,53 +36,57 @@ export class SocketGateway implements OnGatewayInit {
   server: Server;
 
   public afterInit(server: Server) {
-    this.logger.verbose(`WebSocket Server Initialized & total [ ${this.summaryClient}]`);
-  }
-
-  private async retrieveAuth(req: any): Promise<Member | null> {
-    try {
-      const parseUrl = url.parse(req.url, true);
-      const { token } = parseUrl.query;
-      if (!token) return null;
-      return await this.authService.verifyToken(token as string);
-    } catch (err) {
-      return null;
-    }
+    this.logger.verbose(`web socket Started: total: ${this.total}`);
   }
 
   public async handleConnection(client: WebSocket, req: any) {
-    const authMember = await this.retrieveAuth(req);
-    this.summaryClient++;
-    console.log('authMember', authMember);
-    this.clientsAuthMap.set(client, authMember);
+    const authMember = await this.retrieveMember(req);
+    this.total++;
+    this.clientAuthMap.set(client, authMember);
 
-    const clientNick: string = authMember?.memberNick ?? 'Guest';
-    this.logger.verbose(` Connnection [${clientNick}] & total:[ ${this.summaryClient}]`);
+    const clientNick: string = authMember?.memberNick ?? 'guest';
+
+    this.logger.verbose(
+      `web socket Connection ${clientNick} Running: total: ${this.total}`,
+    );
 
     const infoMsg: InfoPayload = {
       event: 'info',
-      totalClients: this.summaryClient,
-      memeberData: authMember,
+      totalClients: this.total,
+      memberData: authMember,
       action: 'joined',
     };
 
     this.emitMessage(infoMsg);
+    // client messages
+    client.send(
+      JSON.stringify({ event: 'getMessages', list: this.messagesList }),
+    );
+  }
 
-    client.send(JSON.stringify({ event: 'getMessages', list: this.messageList }));
+  private async retrieveMember(req: any): Promise<Member | null> {
+    try {
+      const parsedUrl = url.parse(req.url, true);
+      const { token } = parsedUrl.query;
+      return await this.authService.verifyToken(token as string);
+    } catch (error) {
+      console.log(error);
+      return null;
+    }
   }
 
   public handleDisconnect(client: WebSocket) {
-    const authMember = this.clientsAuthMap.get(client) ?? null;
-    this.summaryClient--;
-    this.clientsAuthMap.delete(client);
+    const authMember = this.clientAuthMap.get(client);
+    this.total--;
+    this.clientAuthMap.delete(client);
 
-    const clientNick: string = authMember?.memberNick ?? 'Guest';
-    this.logger.verbose(`Disconnection [${clientNick}] & total:[ ${this.summaryClient}]`);
+    const clientNick: string = authMember?.memberNick ?? 'guest';
+    this.logger.warn(`disconnection: ${clientNick} total: ${this.total}`);
 
     const infoMsg: InfoPayload = {
       event: 'info',
-      totalClients: this.summaryClient,
-      memeberData: authMember,
+      totalClients: this.total,
+      memberData: authMember,
       action: 'left',
     };
 
@@ -88,20 +94,27 @@ export class SocketGateway implements OnGatewayInit {
   }
 
   @SubscribeMessage('message')
-  public async handleMessage(client: WebSocket, payload: string): Promise<void> {
-    const authMember = this.clientsAuthMap.get(client) ?? null;
-    const newMessage: MessagePayload = { event: 'message', text: payload, memberData: authMember };
+  public async handleMessage(
+    client: WebSocket,
+    payload: string,
+  ): Promise<void> {
+    const authMember = this.clientAuthMap.get(client);
+    const newMsg: MessagePayload = {
+      event: 'message',
+      text: payload,
+      memberData: authMember,
+    };
 
-    const clientNick: string = authMember?.memberNick ?? 'Guest';
-    this.logger.verbose(`NEW MESSAGE [${clientNick}]: ${payload}`);
+    this.messagesList.push(newMsg);
+    if (this.messagesList.length > 5)
+      this.messagesList.splice(0, this.messagesList.length - 5);
 
-    this.messageList.push(newMessage);
-    if (this.messageList.length > 5) this.messageList.splice(0, this.messageList.length - 5);
-
-    this.emitMessage(newMessage);
+    const clientNick: string = authMember?.memberNick ?? 'guest';
+    this.logger.verbose(`message: ${clientNick} : ${payload}`);
+    this.emitMessage(newMsg);
   }
 
-  private broadcastMessage(sender: WebSocket, message: InfoPayload | MessagePayload) {
+  private broadcastMessage(sender: WebSocket, message: InfoPayload) {
     this.server.clients.forEach((client) => {
       if (client !== sender && client.readyState === WebSocket.OPEN) {
         client.send(JSON.stringify(message));
@@ -117,45 +130,3 @@ export class SocketGateway implements OnGatewayInit {
     });
   }
 }
-
-
-// @WebSocketGateway({ transports: ['websocket'], secure: false })
-// // @WebSocketGateway(...) — bu decorator bo‘lib, klassni WebSocket gateway deb belgilaydi.
-// // transports websocket deb belgilangan, ya’ni polling o‘chirib qo‘yganmiz.
-// export class SocketGateway implements OnGatewayInit {
-// 	// socketGateway – klass bu kevotti bu OnGatewayInit interfaceni implement qilyapti
-// 	private logger: Logger = new Logger('SocketEventsGateway');
-// 	// logger — bu property (Logger tipida), log yozish uchun ishlatiladi.
-// 	// Logger('SocketEventsGateway') — bu yerda SocketEventsGateway — log tag sifatida ko‘rsatiladi
-// 	private summaryClient: number = 0;
-// 	// summaryClient — bu ham property bo‘lib, foydalanuvchilar sonini hisoblash uchun ishlatiladi.
-// 	// summaryClient ni logda chiqarilyapti — bu oddiygina boshlang‘ich qiymatni ko‘rsatish
-
-// 	public afterInit(server: Server) {
-// 		// afterInit() method kelib ichida serverni  argument qilib berdik
-// 		this.logger.log(`WebSocket Server Initialized total: ${this.summaryClient}`);
-// 		// this.logger.log(...) — bu yerda property (logger) orqali method (log) chaqirilgan.
-// 	}
-
-// 	handleConnection(client: WebSocket, ...args: any[]) {
-// 		// handleConnection() — bu method. ichida 2 ta  client, args — bu yerda argumentlar berdik
-// 		this.summaryClient++; // this.summaryClient++ — bu property qiymatini oshiradi
-// 		this.logger.log(`== Client connected total: ${this.summaryClient} ==`);
-// 		// logger.log(...) — method orqali log yoziladi.
-
-// 		//Har safar WebSocket orqali yangi foydalanuvchi ulanadigan bo‘lsa:
-// 		//Uni hisobga oladi
-// 		//Foydalanuvchilar sonini oshiradi
-// 		//Logga yozadi
-// 	}
-
-// 	handleDisconnect(client: WebSocket) {
-// 		this.summaryClient--;
-// 		this.logger.log(`== Client disconnected left total: ${this.summaryClient} ==`);
-// 	}
-
-// 	@SubscribeMessage('message')
-// 	public handleMessage(client: WebSocket, payload: any): string {
-// 		return 'Hello world!';
-// 	}
-// }
