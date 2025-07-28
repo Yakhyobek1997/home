@@ -15,20 +15,20 @@ import { GraphQLError } from 'graphql';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-
-    GraphQLModule.forRoot<ApolloDriverConfig>({  
+    GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
       playground: true,
-      // uploads: false,
       autoSchemaFile: true,
-      installSubscriptionHandlers: true, // 
+      // GraphQL subscriptions qo'shildi
       subscriptions: {
         'subscriptions-transport-ws': {
-          path: '/graphql', // frontenddagi ws://localhost:3007/graphql 
-          onConnect: (connectionParams) => {
-            console.log(' GraphQL WS Connected');
-            const token = connectionParams?.Authorization?.split(' ')[1];
-            return { token }; // contextda token ishlatish uchun
+          path: '/graphql',
+          onConnect: (connectionParams: Record<string, any>) => {
+            const auth = connectionParams?.Authorization;
+            const token = auth?.startsWith('Bearer ')
+              ? auth.split(' ')[1]
+              : null;
+            return { token };
           },
         },
       },
@@ -45,7 +45,6 @@ import { GraphQLError } from 'graphql';
         };
       },
     }),
-
     ComponentsModule,
     DatabaseModule,
     SocketModule,
@@ -54,3 +53,5 @@ import { GraphQLError } from 'graphql';
   providers: [AppService, AppResolver],
 })
 export class AppModule {}
+
+
